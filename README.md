@@ -44,6 +44,6 @@ python convert_auto_xz.py --burnin=0 --update ../data/mda_K50.xz.json ../data/la
 ## Missing value imputation
 
 ```
-make -j -f eval_mv.make all AUTO=1 MODEL_PREFIX=mda TRAIN_OPTS="--type=auto --init_clusters --maxanneal=100 --norm_sigma=10.0 --gamma_scale=1.0"
+make -j -f eval_mv.make all MODEL_PREFIX=mda TRAIN_OPTS="--init_clusters --maxanneal=100 --norm_sigma=10.0 --gamma_scale=1.0"
 
 ```
