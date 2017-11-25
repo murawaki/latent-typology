@@ -10,8 +10,8 @@
 # Requirements
 
 - Python2
--- numpy
--- scipy
+    - numpy
+    - scipy
 
 The code also depends on [the comp-typology package](https://github.com/murawaki/comp-typology).
 
