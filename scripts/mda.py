@@ -4,6 +4,7 @@ from scipy.stats import norm, gamma
 import random
 import sys
 import copy
+import six
 
 from rand_utils import rand_partition_log
 from hmc import hmc
@@ -47,8 +48,8 @@ class MatrixDecompositionAutologistic(object):
         self.mvs = mvs # missing values; (i,p) => bool (True: missing value)
         self.mv_list = []
         if self.mvs is not None:
-            for l in xrange(self.L):
-                for p in xrange(self.P):
+            for l in six.moves.xrange(self.L):
+                for p in six.moves.xrange(self.P):
                     if self.mvs[l,p]:
                         self.mv_list.append((l,p))
         self.fmap = fmap # fmap(j) = p, q
@@ -94,12 +95,12 @@ class MatrixDecompositionAutologistic(object):
     def init_with_freq(self, K=50, anneal=0.0):
         # arg: K is dummy
         freqlist = 0.5 * np.ones(self.M, dtype=np.float32)
-        for i in xrange(self.L):
-            for p in xrange(self.P):
+        for i in six.moves.xrange(self.L):
+            for p in six.moves.xrange(self.P):
                 j_start, T = self.bmap(p)
                 if self.mvs is None or self.mvs[i,p] == False:
                     freqlist[j_start+self.mat[i,p]] += 1
-        for p in xrange(self.P):
+        for p in six.moves.xrange(self.P):
             j_start, T = self.bmap(p)
             freqlist[j_start:j_start+T] /= freqlist[j_start:j_start+T].sum()
             if anneal > 0.0:
@@ -111,7 +112,7 @@ class MatrixDecompositionAutologistic(object):
         idxs = np.random.randint(0, self.L, size=K)
         betas = np.random.beta(alpha, 1.0, size=self.L)
         ws = np.zeros((self.M, K), dtype=np.float32)
-        for j in xrange(self.M):
+        for j in six.moves.xrange(self.M):
             ws[j] = np.random.normal(logfreqlist[j], scale=0.5, size=K) # mean w_old, variance: self.GAMMA_ETA * w_old
         ws = np.where(ws > 1E-3, ws, 1E-3)
         for k, (idx, beta) in enumerate(zip(idxs, betas)):
@@ -132,18 +133,18 @@ class MatrixDecompositionAutologistic(object):
     def init_with_clusters(self, K=50):
         # arg: K is dummy
         freqlist = np.zeros(self.M, dtype=np.float32)
-        for i in xrange(self.L):
-            for p in xrange(self.P):
+        for i in six.moves.xrange(self.L):
+            for p in six.moves.xrange(self.P):
                 j_start, T = self.bmap(p)
                 if self.mvs is None or self.mvs[i,p] == False:
                     freqlist[j_start+self.mat[i,p]] += 1
-        for p in xrange(self.P):
+        for p in six.moves.xrange(self.P):
             j_start, T = self.bmap(p)
             freqlist[j_start:j_start+T] /= freqlist[j_start:j_start+T].sum()
         # use only K-1 binary features
         killlist = np.arange(self.M)
         np.random.shuffle(killlist)
-        for i in xrange(self.M - K + 1):
+        for i in six.moves.xrange(self.M - K + 1):
             freqlist[killlist[i]] = 0.0
         jlist = sorted(range(self.M), key=lambda x: freqlist[x], reverse=True)
         min_mu = 0.99
@@ -154,7 +155,7 @@ class MatrixDecompositionAutologistic(object):
 
         # subsequent K-1 features
         idxs = np.random.randint(0, self.L, size=K)
-        for k in xrange(1, K):
+        for k in six.moves.xrange(1, K):
             j = jlist[k-1]
             min_mu = max(freqlist[j], 0.001)
             self.alphas[k] = np.log(min_mu / (1.0 - min_mu))
@@ -162,7 +163,7 @@ class MatrixDecompositionAutologistic(object):
             self.wmat[k,j] += 10.0 * np.random.gamma(freqlist[j] * 1.0, 1.0)
             p, q = self.fmap(j)
             j_start, T = self.bmap(p)
-            for l in xrange(self.L):
+            for l in six.moves.xrange(self.L):
                 if self.mvs is None or self.mvs[l,p] == False:
                     if self.mat[l,p] == q:
                         self.zmat[k,l] = True
@@ -178,8 +179,8 @@ class MatrixDecompositionAutologistic(object):
     def calc_loglikelihood(self):
         # self.calc_theta_tilde()
         ll = 0.0
-        for i in xrange(self.L):
-            for p in xrange(self.P):
+        for i in six.moves.xrange(self.L):
+            for p in six.moves.xrange(self.P):
                 j_start, T = self.bmap(p)
                 x = self.mat[i,p]
                 ll += np.log(self.theta[i,j_start+x] + 1E-20)
@@ -190,30 +191,30 @@ class MatrixDecompositionAutologistic(object):
 
     def calc_theta_tilde(self):
         self.theta_tilde[...] = np.matmul(self.zmat.T, self.wmat) # (K x L)^T x (K x M) -> (L x M)
-        for p in xrange(self.P):
+        for p in six.moves.xrange(self.P):
             j_start, T = self.bmap(p)
             e_theta_tilde = np.exp(self.theta_tilde[:,j_start:j_start+T] - self.theta_tilde[:,j_start:j_start+T].max(axis=1).reshape(self.L, 1))
             self.theta[:,j_start:j_start+T] = e_theta_tilde / e_theta_tilde.sum(axis=1).reshape(self.L, 1)
-        # for i in xrange(self.L):
-        #     for p in xrange(self.P):
+        # for i in six.moves.xrange(self.L):
+        #     for p in six.moves.xrange(self.P):
         #         j_start, T = self.bmap(p)
         #         e_theta_tilde = np.exp(self.theta_tilde[i,j_start:j_start+T] - self.theta_tilde[i,j_start:j_start+T].max())
         #         self.theta[i,j_start:j_start+T] = e_theta_tilde / e_theta_tilde.sum()
 
     def init_tasks(self, a_repeat=1, sample_w=True):
-        self.tasks = map(lambda x: (self.S_X, x), self.mv_list)
-        for k in xrange(self.K):
-            for a in xrange(a_repeat):
+        self.tasks = list(map(lambda x: (self.S_X, x), self.mv_list))
+        for k in six.moves.xrange(self.K):
+            for a in six.moves.xrange(a_repeat):
                 if not self.only_alphas:
                     if not self.drop_vs:
                         self.tasks.append((self.S_Z_V, k))
                     if not self.drop_hs:
                         self.tasks.append((self.S_Z_H, k))
                 self.tasks.append((self.S_Z_A, k))
-        for l in xrange(self.L):
-            self.tasks += map(lambda k: (self.S_Z, (l, k)), xrange(self.K))
+        for l in six.moves.xrange(self.L):
+            self.tasks += map(lambda k: (self.S_Z, (l, k)), six.moves.xrange(self.K))
         if sample_w:
-            self.tasks += map(lambda k: (self.S_W_HMC, k), xrange(self.K))
+            self.tasks += map(lambda k: (self.S_W_HMC, k), six.moves.xrange(self.K))
 
     def sample(self, _iter=0, maxanneal=0, itemp=-1):
         # inverse of temperature
@@ -290,7 +291,7 @@ class MatrixDecompositionAutologistic(object):
             logprob0 += self.hks[k] * (harray == False).sum()
             logprob1 += self.hks[k] * (harray == True).sum()
         logprob1 += self.alphas[k]
-        for p in xrange(self.P):
+        for p in six.moves.xrange(self.P):
             j_start, T = self.bmap(p)
             x = self.mat[l,p]
             prob_x = self.theta[l,j_start+x] + 1E-20
@@ -321,7 +322,7 @@ class MatrixDecompositionAutologistic(object):
             else:
                 # 1 -> 0
                 self.theta_tilde[l] -= self.wmat[k]
-            for p in xrange(self.P):
+            for p in six.moves.xrange(self.P):
                 j_start, T = self.bmap(p)
                 e_theta_tilde = np.exp(self.theta_tilde[l,j_start:j_start+T] - self.theta_tilde[l,j_start:j_start+T].max())
                 self.theta[l,j_start:j_start+T] = e_theta_tilde / e_theta_tilde.sum()
@@ -423,7 +424,7 @@ class MatrixDecompositionAutologistic(object):
 
     def _neighbor_sum(self, zvect, net):
         s = 0
-        for l in xrange(self.L):
+        for l in six.moves.xrange(self.L):
             s += (zvect[net[l]] == zvect[l]).sum()
         assert(s % 2 == 0)
         return s / 2
@@ -432,11 +433,11 @@ class MatrixDecompositionAutologistic(object):
         def U(Mvect):
             # ll = -norm.logpdf(Mvect, 0.0, scale=self.sigma).sum()
             ll = 0.5 * (self.sigma + 1.0) * np.log(1.0 + (Mvect * Mvect) / self.sigma).sum()
-            for l in xrange(self.L):
+            for l in six.moves.xrange(self.L):
                 if self.zmat[k,l] == False:
                     continue
                 theta_tilde = self.theta_tilde[l] - self.wmat[k] + Mvect
-                for p in xrange(self.P):
+                for p in six.moves.xrange(self.P):
                     j_start, T = self.bmap(p)
                     x = self.mat[l,p]
                     theta_tilde2 = theta_tilde[j_start:j_start+T] - theta_tilde[j_start:j_start+T].max()
@@ -445,11 +446,11 @@ class MatrixDecompositionAutologistic(object):
         sigma2 = (self.sigma + 1.0) / self.sigma
         def gradU(Mvect):
             grad = sigma2 * (Mvect / (1.0 + (Mvect * Mvect) / self.sigma))
-            for l in xrange(self.L):
+            for l in six.moves.xrange(self.L):
                 if self.zmat[k,l] == False:
                     continue
                 theta_tilde = self.theta_tilde[l] - self.wmat[k] + Mvect
-                for p in xrange(self.P):
+                for p in six.moves.xrange(self.P):
                     j_start, T = self.bmap(p)
                     x = self.mat[l,p]
                     j = j_start + x
@@ -461,11 +462,11 @@ class MatrixDecompositionAutologistic(object):
         accepted, Mvect = hmc(U, gradU, self.HMC_EPSILON, self.HMC_L, self.wmat[k])
         if accepted:
             # update theta_tilde
-            for l in xrange(self.L):
+            for l in six.moves.xrange(self.L):
                 if self.zmat[k,l] == False:
                     continue
                 self.theta_tilde[l] += Mvect - self.wmat[k]
-                for p in xrange(self.P):
+                for p in six.moves.xrange(self.P):
                     j_start, T = self.bmap(p)
                     e_theta_tilde = np.exp(self.theta_tilde[l,j_start:j_start+T] - self.theta_tilde[l,j_start:j_start+T].max())
                     self.theta[l,j_start:j_start+T] = e_theta_tilde / e_theta_tilde.sum()

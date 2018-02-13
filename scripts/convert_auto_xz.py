@@ -6,7 +6,7 @@ import sys
 import codecs
 import json
 import numpy as np
-import cPickle
+import six
 from argparse import ArgumentParser
 
 from json_utils import load_json_file, load_json_stream
@@ -18,7 +18,7 @@ def update_features(lang, fid2struct):
         size = len(fnode["vid2label"])
         wals_id = fnode["wals_id"]
         maxv, maxvv = -1, -1
-        for i in xrange(size):
+        for i in six.moves.xrange(size):
             if lang["xfreq"][binsize+i] >= maxvv:
                 maxvv = lang["xfreq"][binsize+i]
                 maxv = i
@@ -58,12 +58,12 @@ def main():
                 zfreq = np.zeros((L, len(langdat["z"])), dtype=np.int32)
                 # sys.stderr.write("{}\n".format(zfreq.shape))
             zfreq += np.array(langdat["z"]).T
-            for lid in xrange(L):
-                for p in xrange(P):
+            for lid in six.moves.xrange(L):
+                for p in six.moves.xrange(P):
                     j_start, T = bmap(p)
                     xfreq[lid,j_start + langdat["x"][lid][p]] += 1
     sys.stderr.write("\n")
-    for lid in xrange(L):
+    for lid in six.moves.xrange(L):
         langlist[lid]["count"] = count
         langlist[lid]["xfreq"] = xfreq[lid].tolist()
         langlist[lid]["zfreq"] = zfreq[lid].tolist()

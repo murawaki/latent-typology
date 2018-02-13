@@ -4,6 +4,7 @@ Hamiltonian Monte Carlo
 http://www.mcmchandbook.net/HandbookChapter5.pdf
 """
 
+import six
 import numpy as np
 
 def hmc(U, gradU, epsilon, L, current_q):
@@ -14,7 +15,7 @@ def hmc(U, gradU, epsilon, L, current_q):
     # make a half step for momentum at the beginning
     p = p - epsilon * gradU(q) / 2.0
     # alternate full steps for position and momentum
-    for i in xrange(L):
+    for i in six.moves.xrange(L):
         # make a full step for the position
         q = q + epsilon * p
         # make a full step for the momentum, except at end of trajectory

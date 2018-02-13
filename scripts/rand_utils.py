@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import six
 import numpy as np
 
 def rand_partition_log(log_list):
@@ -10,7 +11,7 @@ def rand_partition_log(log_list):
 def rand_partition(prob_list):
     s = sum(prob_list)
     r = np.random.uniform(0, s)
-    for i in xrange(0, len(prob_list)):
+    for i in six.moves.xrange(0, len(prob_list)):
         r -= prob_list[i]
         if r <= 0.0:
             return i

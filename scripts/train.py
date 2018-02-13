@@ -9,7 +9,7 @@ import math
 import json
 import numpy as np
 import random
-import cPickle
+import six
 from argparse import ArgumentParser
 
 from json_utils import load_json_file, load_json_stream
@@ -118,7 +118,7 @@ def eval_cvlist(mda):
     return cv_result
 
 def main():
-    sys.stderr = codecs.getwriter("utf-8")(sys.stderr)
+    # sys.stderr = codecs.getwriter("utf-8")(sys.stderr)
 
     parser = ArgumentParser()
     parser.add_argument("-s", "--seed", metavar="INT", type=int, default=None,
@@ -132,6 +132,8 @@ def main():
                         help="autologistic: ignore v")
     parser.add_argument("-i", "--iter", dest="_iter", metavar="INT", type=int, default=1000,
                         help="# of iterations")
+    parser.add_argument("--save_interval", metavar="INT", type=int, default=-1,
+                        help="save interval")
     parser.add_argument("--alpha", metavar="FLOAT", type=float, default=-1.0,
                         help="parameter alpha")
     parser.add_argument("-K", "--initK", metavar="INT", type=int, default=100,
@@ -174,7 +176,7 @@ def main():
             args.resume = args.output + ".best"
     if args.resume:
         sys.stderr.write("loading model from %s\n" % args.resume)
-        spec = cPickle.load(open(args.resume, "rb"))
+        spec = six.moves.cPickle.load(open(args.resume, "rb"))
         mda = spec["model"]
         mda.init_dump(fmap, bmap)
         sys.stderr.write("iter %d: %f\n" % (spec["iter"] + 1, spec["ll"]))
@@ -210,18 +212,24 @@ def main():
         if args.cv:
             eval_cvlist(mda)
     ll_max = -np.inf
-    for _iter in xrange(offset, args._iter):
+    for _iter in six.moves.xrange(offset, args._iter):
         mda.sample(_iter=_iter, maxanneal=args.maxanneal)
         ll = mda.calc_loglikelihood()
         sys.stderr.write("iter %d: %f\n" % (_iter + 1, ll))
         if args.cv:
             cv_result = eval_cvlist(mda)
+        if args.save_interval >= 0 and (_iter + 1) % args.save_interval == 0:
+            with open(args.output + ".{}".format(_iter), "wb") as f:
+                obj = { "model": mda.dumps(), "iter": _iter, "ll": ll }
+                if args.cv:
+                    obj["cv_result"] = cv_result
+                six.moves.cPickle.dump(obj, f)
         if args.output is not None:
             with open(args.output + ".current", "wb") as f:
                 obj = { "model": mda.dumps(), "iter": _iter, "ll": ll }
                 if args.cv:
                     obj["cv_result"] = cv_result
-                cPickle.dump(obj, f)
+                six.moves.cPickle.dump(obj, f)
         if ll > ll_max:
             ll_max = ll
             shutil.copyfile(args.output + ".current", args.output + ".best")
@@ -230,7 +238,7 @@ def main():
             obj = { "model": mda.dumps(), "iter": _iter, "ll": ll }
             if args.cv:
                 obj["cv_result"] = cv_result
-            cPickle.dump(obj, f)
+            six.moves.cPickle.dump(obj, f)
 
 if __name__ == "__main__":
     main()

@@ -7,8 +7,8 @@ import codecs
 import json
 import numpy as np
 import random
-import cPickle
-from itertools import ifilter
+import six
+# from itertools import ifilter
 from argparse import ArgumentParser
 
 from json_utils import load_json_file, load_json_stream
@@ -26,7 +26,7 @@ def dumps(mda, _iter):
     }
 
 def main():
-    sys.stderr = codecs.getwriter("utf-8")(sys.stderr)
+    # sys.stderr = codecs.getwriter("utf-8")(sys.stderr)
 
     parser = ArgumentParser()
     parser.add_argument("-s", "--seed", metavar="INT", type=int, default=None,
@@ -50,7 +50,7 @@ def main():
 
     fid2struct = load_json_file(args.fid2struct)
     P, M, fmap, bmap = create_maps(fid2struct)
-    spec = cPickle.load(open(args.model, "rb"))
+    spec = six.moves.cPickle.load(open(args.model, "rb"))
     mda = spec["model"]
     L, P = mda.mat.shape
     mda.fmap = fmap
@@ -60,7 +60,7 @@ def main():
     sys.stderr.write("iter 0\n")
     f.write("%s\n" % json.dumps(dumps(mda, 0)))
     mda.init_tasks(a_repeat=args.a_repeat, sample_w=False)
-    for _iter in xrange(args._iter - 1): # already have iter 0
+    for _iter in six.moves.xrange(args._iter - 1): # already have iter 0
         sys.stderr.write("iter {}\n".format(_iter + 1))
         mda.sample(_iter=_iter)
         f.write("%s\n" % json.dumps(dumps(mda, _iter + 1)))
