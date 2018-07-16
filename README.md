@@ -1,3 +1,5 @@
+**Now superseded by https://github.com/murawaki/lattyp**
+
 # About
 
   Yugo Murawaki. 2017.  Diachrony-aware Induction of Binary Latent
